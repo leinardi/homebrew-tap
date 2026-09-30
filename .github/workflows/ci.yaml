@@ -1,0 +1,186 @@
+name: CI
+
+on:
+  pull_request:
+  # A release pipeline delivers a new cask version as a push to main. Only cask-audit runs on it,
+  # and only to report: see the job.
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Every job reads the repository and nothing else, unless it says otherwise below.
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    # Reports inline PR review comments over a diff range; a manual dispatch has
+    # neither a pull request to comment on nor a base ref to diff against.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # reviewdog posts its findings as a pull request review (-reporter=github-pr-review in every
+    # action this workflow uses, at the pinned commit), which needs pull-requests: write. It
+    # creates no check runs, so checks: write is not needed.
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Run actionlint via pre-commit + reviewdog
+        uses: leinardi/gha-pre-commit-reviewdog-actions/actionlint@68bf8e338b79df404181ceef655ae02f1c8edb8a # v1.0.2
+        with:
+          from-ref: ${{ github.event.pull_request.base.sha }}
+          to-ref: ${{ github.event.pull_request.head.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  pre-commit-hooks:
+    # Reports inline PR review comments over a diff range; a manual dispatch has
+    # neither a pull request to comment on nor a base ref to diff against.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # reviewdog posts its findings as a pull request review (-reporter=github-pr-review in every
+    # action this workflow uses, at the pinned commit), which needs pull-requests: write. It
+    # creates no check runs, so checks: write is not needed.
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Run pre-commit hooks + reviewdog diff
+        uses: leinardi/gha-pre-commit-reviewdog-actions/pre-commit-hooks@68bf8e338b79df404181ceef655ae02f1c8edb8a # v1.0.2
+        with:
+          from-ref: ${{ github.event.pull_request.base.sha }}
+          to-ref: ${{ github.event.pull_request.head.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  markdownlint:
+    # Reports inline PR review comments over a diff range; a manual dispatch has
+    # neither a pull request to comment on nor a base ref to diff against.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # reviewdog posts its findings as a pull request review (-reporter=github-pr-review in every
+    # action this workflow uses, at the pinned commit), which needs pull-requests: write. It
+    # creates no check runs, so checks: write is not needed.
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Run markdownlint-cli2 via pre-commit + reviewdog
+        uses: leinardi/gha-pre-commit-reviewdog-actions/markdownlint-cli2@68bf8e338b79df404181ceef655ae02f1c8edb8a # v1.0.2
+        with:
+          from-ref: ${{ github.event.pull_request.base.sha }}
+          to-ref: ${{ github.event.pull_request.head.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  yamllint:
+    # Reports inline PR review comments over a diff range; a manual dispatch has
+    # neither a pull request to comment on nor a base ref to diff against.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # reviewdog posts its findings as a pull request review (-reporter=github-pr-review in every
+    # action this workflow uses, at the pinned commit), which needs pull-requests: write. It
+    # creates no check runs, so checks: write is not needed.
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Run yamllint via pre-commit + reviewdog
+        uses: leinardi/gha-pre-commit-reviewdog-actions/yamllint@68bf8e338b79df404181ceef655ae02f1c8edb8a # v1.0.2
+        with:
+          from-ref: ${{ github.event.pull_request.base.sha }}
+          to-ref: ${{ github.event.pull_request.head.sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  conventional-commits:
+    # Keeps a human pull request's commits in the same shape as the rest of the
+    # history. The local commit-msg hook only runs where `make pre-commit-install`
+    # was run; this job is the check that no commit skips. The release pipelines'
+    # own pushes (`chore(cask): monmux vX.Y.Z`) never pass through it. It runs the repository's own
+    # conventional-pre-commit hook, so --force-scope applies here too, and it
+    # skips merge commits. No pull-request title check: squash merging is
+    # disabled, so a title never becomes a commit on main. Enabling squash
+    # merging would need one added here first.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Validate the commit messages
+        uses: leinardi/gha-pre-commit-reviewdog-actions/conventional-commits@68bf8e338b79df404181ceef655ae02f1c8edb8a # v1.0.2
+        with:
+          from-ref: ${{ github.event.pull_request.base.sha }}
+          to-ref: ${{ github.event.pull_request.head.sha }}
+
+  # Audits every cask as Homebrew itself loads it, on pull requests, on every push to main (which is
+  # how a release pipeline delivers a new cask version) and on demand. On a push it only reports: a
+  # release pipeline's push is never gated, and a cask it generated is fixed in the producing
+  # repository, not here.
+  cask-audit:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    continue-on-error: ${{ github.event_name == 'push' }}
+    env:
+      HOMEBREW_NO_ANALYTICS: "1"
+      HOMEBREW_NO_AUTO_UPDATE: "1"
+      HOMEBREW_NO_ENV_HINTS: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Path-based `brew audit` is disabled for casks, so the checkout is tapped under the tap's own
+      # name. The published tap must not be what gets audited: the job fails unless the tapped
+      # repository is exactly this checkout.
+      - name: Tap this checkout as leinardi/tap
+        run: |
+          set -euo pipefail
+          brew untap leinardi/tap 2>/dev/null || true
+          brew tap leinardi/tap "$GITHUB_WORKSPACE"
+          TAPPED=$(git -C "$(brew --repository leinardi/tap)" rev-parse HEAD)
+          CHECKED_OUT=$(git rev-parse HEAD)
+          if [ "$TAPPED" != "$CHECKED_OUT" ]; then
+            echo "The tapped leinardi/tap is at $TAPPED, not at this checkout ($CHECKED_OUT)." >&2
+            exit 1
+          fi
+
+      # Cask/StanzaOrder is excluded because the monmux cask puts postflight_steps ahead of the
+      # artifact stanzas on purpose: goreleaser can only emit that stanza as a custom_block, which
+      # it renders first. See the note on custom_block in leinardi/monmux's .goreleaser.yaml
+      # (goreleaser/goreleaser#6870); drop the exclusion once that workaround goes.
+      - name: Check the style
+        run: brew style --except-cops Cask/StanzaOrder leinardi/tap
+
+      - name: Audit
+        run: brew audit --tap leinardi/tap --strict --online

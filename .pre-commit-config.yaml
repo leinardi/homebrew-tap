@@ -1,0 +1,66 @@
+default_install_hook_types: [pre-commit, commit-msg]
+
+# Casks/ and Formula/ are written by the release pipelines of the projects they package
+# (goreleaser in leinardi/monmux) and pushed straight to main. These hooks never run on those
+# pushes, and the fixers leave the generated files alone even for a human commit: a hand edit
+# there is overwritten by the next release anyway, and has to be made in the producing repository.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+        exclude: ^(Casks|Formula)/
+      - id: trailing-whitespace
+        exclude: ^(Casks|Formula)/
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+  - repo: https://github.com/checkmake/checkmake.git
+    rev: v0.3.2
+    hooks:
+      - id: checkmake
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        name: actionlint
+        files: ^\.github/workflows/.*\.(yml|yaml)$
+        args: ["-shellcheck", "shellcheck -S error"]
+      - id: actionlint
+        alias: actionlint-oneline
+        name: actionlint (one line per one error)
+        files: ^\.github/workflows/.*\.(yml|yaml)$
+        args: ["-oneline", "-shellcheck", "shellcheck -S error"]
+        stages: [manual]
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.23.3
+    hooks:
+      - id: markdownlint-cli2
+        additional_dependencies:
+          - markdownlint-rule-table-format@1.0.3
+  - repo: local
+    hooks:
+      - id: prettier-yaml
+        name: prettier-yaml
+        entry: prettier
+        language: node
+        additional_dependencies: ["prettier@3.7.4"]
+        files: \.(yml|yaml)$
+        args: ["--write"]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+      - id: yamllint
+        alias: yamllint-parsable
+        name: "yamllint (parsable output)"
+        args: ["--format", "parsable"]
+        stages: [manual]
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: ["--force-scope"]

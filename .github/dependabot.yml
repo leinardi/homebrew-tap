@@ -1,0 +1,27 @@
+version: 2
+
+# Only the tooling: the casks themselves are updated by the release pipelines that produce them.
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    labels: ["dependencies", "ci"]
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+    labels: ["dependencies", "ci"]
+    groups:
+      pre-commit-hooks:
+        patterns:
+          - "*"
