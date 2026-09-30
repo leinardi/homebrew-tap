@@ -175,12 +175,28 @@ jobs:
             exit 1
           fi
 
-      # Cask/StanzaOrder is excluded because the monmux cask puts postflight_steps ahead of the
-      # artifact stanzas on purpose: goreleaser can only emit that stanza as a custom_block, which
-      # it renders first. See the note on custom_block in leinardi/monmux's .goreleaser.yaml
-      # (goreleaser/goreleaser#6870); drop the exclusion once that workaround goes.
-      - name: Check the style
-        run: brew style --except-cops Cask/StanzaOrder leinardi/tap
+      # Only the casks: `brew style <tap>` also runs shfmt over scripts/bootstrap-mk-common.sh,
+      # which is fetched verbatim from leinardi/make-common and not restyled here.
+      #
+      # Three cops are excluded, each for a layout goreleaser renders and this repository cannot
+      # change (the casks are generated):
+      # - Cask/StanzaOrder: monmux's postflight_steps comes first because goreleaser can only emit
+      #   it as a custom_block, which it renders at the top. See the custom_block note in
+      #   leinardi/monmux's .goreleaser.yaml (goreleaser/goreleaser#6870); drop the exclusion
+      #   once that workaround goes.
+      # - Cask/StanzaGrouping and Layout/FirstArrayElementIndentation: goreleaser puts
+      #   `depends_on formula: [` right after the livecheck block, without an empty line, and
+      #   indents the array by six spaces.
+      - name: Check the style of every cask
+        run: |
+          set -euo pipefail
+          TOKENS=()
+          for cask in Casks/*.rb; do
+            TOKENS+=("leinardi/tap/$(basename "$cask" .rb)")
+          done
+          brew style --cask \
+            --except-cops Cask/StanzaOrder,Cask/StanzaGrouping,Layout/FirstArrayElementIndentation \
+            "${TOKENS[@]}"
 
       - name: Audit
         run: brew audit --tap leinardi/tap --strict --online
