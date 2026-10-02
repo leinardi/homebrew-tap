@@ -6,8 +6,8 @@ description: >
   that could block a release pipeline's push, hand edits to generated casks,
   unpinned or off-project downloads, postflight steps that do more than
   documented, and workflow permission or pinning drift, then reports ranked
-  findings. Use whenever the user asks to review changes, a diff, PR, branch,
-  or commit; check work before committing; or assess merge readiness.
+  findings. Use when the user asks to review changes, a diff, PR, branch, or
+  commit; check work before committing; or assess merge readiness.
 ---
 
 # Adversarial Review - homebrew-tap
@@ -18,20 +18,32 @@ the casks. Find the concrete push, cask, or workflow run where it fails. Do not
 praise or restyle the change. A review with no findings is credible only after
 active attempts to break it.
 
-This skill is the entry point for reviewing any change in this repository.
-`AGENTS.md` remains the source of truth; this skill defines review procedure
-and reporting.
+This skill defines the review procedure and reporting. `AGENTS.md` remains the
+source of truth.
+
+Copy this checklist and tick items as you go:
+
+```text
+Review progress:
+- [ ] 1. Diff and intent established (default scope if none given)
+- [ ] 2. AGENTS.md and, for a cask change, the producing generator read
+- [ ] 3. Repository invariants checked
+- [ ] 4. Adversarial passes run
+- [ ] 5. Findings confirmed or dropped; gates run
+- [ ] 6. Report written
+```
 
 ## 1. Establish the diff
 
 Never review from memory or only from the user's description. Read the actual
-diff and determine its intent.
+diff and determine its intent. With no scope given, review the uncommitted
+work; if the tree is clean, review the branch against `main`.
 
 | User intent | Command |
 | --- | --- |
 | "my work", "before I commit", uncommitted changes | `git status --short`, then `git diff HEAD`; inspect untracked files too |
 | staged changes only | `git diff --staged` |
-| branch, "this PR", "ready to merge" | determine the default/base branch, then `git diff <base>...HEAD` |
+| branch, "this PR", "ready to merge" | `git diff main...HEAD` |
 | specific commit range | `git diff <base>..<head>` |
 | GitHub PR number | `gh pr view <n>` for intent and metadata, then `gh pr diff <n>` |
 
@@ -39,10 +51,8 @@ Read `git log --oneline` for the reviewed range and any linked issue or PR
 body. Code that works but does something other than the stated intent is a
 finding.
 
-Read every changed file with enough surrounding context to understand its
-contracts. For non-trivial behavior changes, inspect callers, implementations,
-tests, and documentation that depend on the changed symbol. Use symbol and
-reference tools rather than assuming all call sites appear in the diff.
+Read every changed file in full, and the workflow jobs and docs that depend on
+it.
 
 ## 2. Load project authority
 
@@ -84,10 +94,15 @@ and that project's release workflow: the fix for a generated file is there.
   excluded cop or audit hide something beyond the documented goreleaser
   stanza order?
 - **Install path:** for a cask change, walk `brew install --cask` on Apple
-  Silicon and Intel (the monmux cask ships arm64 only), with and without the
-  quarantine attribute, and `brew uninstall --zap`.
+  Silicon and Intel (check which architectures the cask's `on_arm`/`on_intel`
+  blocks cover), with and without the quarantine attribute, and
+  `brew uninstall --zap`.
 - **Contract drift:** compare the README table, AGENTS.md, SECURITY.md and the
   producing repositories' docs with the change.
+
+For each candidate finding, reproduce it or trace the failing push, cask or
+workflow run end to end. If that confirms it, report it. If not, dig once
+more; if it is still unconfirmed, drop it.
 
 ## 5. Verify findings and gates
 
@@ -95,7 +110,7 @@ and that project's release workflow: the fix for a generated file is there.
 | --- | --- |
 | workflows, Makefile, pre-commit config | `make check` |
 | a cask (revert only) | on a Mac: `brew tap leinardi/tap "$PWD"`, `brew style --except-cops Cask/StanzaOrder leinardi/tap`, `brew audit --tap leinardi/tap --strict --online` |
-| docs or skill only | inspect the rendered content and run `git diff --check` |
+| docs or skill only | `make check` |
 
 A failing gate is a confirmed finding when caused by the reviewed change. If a
 gate cannot run (no Mac for the cask audit), say so and rely on CI's
@@ -103,9 +118,10 @@ gate cannot run (no Mac for the cask audit), say so and rely on CI's
 
 ## 6. Report
 
-Rank findings by severity, worst first. Anything that can block a release pipeline's push, or a cask that downloads
-unverified code, is normally a blocker. Skip pure
-formatting unless it changes meaning or breaks a required gate.
+Rank findings by severity, worst first. Anything that can block a release
+pipeline's push, or a cask that downloads unverified code, is normally a
+blocker. Skip pure formatting unless it changes meaning or breaks a required
+gate.
 
 For each finding:
 
