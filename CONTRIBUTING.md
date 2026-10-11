@@ -24,3 +24,10 @@ with a scope: `<type>(<scope>)[!]: <description>`, e.g. `ci(audit): run brew sty
 The `conventional-pre-commit` hook enforces this on `commit-msg`, and the `conventional-commits` CI
 job checks every commit of a pull request. Pull requests are merged with merge commits, so every
 commit lands on `main` as it is.
+
+## License headers
+
+A new shell script, Ruby or Python file, or repository-local make file carries the MIT header, with
+the year of its first commit; copy it from `scripts/check-license-headers.sh`, which the
+`check-license-headers` pre-commit hook runs. The generated casks and the files fetched from
+make-common are exempt.

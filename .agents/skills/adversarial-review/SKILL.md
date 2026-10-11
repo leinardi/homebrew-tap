@@ -59,9 +59,10 @@ a generated file is there.
 ## 3. Repository invariants
 
 - **Nothing blocks a release pipeline's push.** No branch ruleset, no required check, no workflow
-  that fails a push to `main` in a way that matters: on a push, `cask-audit` reports with
-  `continue-on-error`, and every other job is gated to pull requests. A change that makes a
-  push-time job gate anything, or that needs the bot's commit to pass a hook, is a blocker.
+  that fails a push to `main` in a way that matters: on a push, `pre-commit-all` and `cask-audit`
+  report with `continue-on-error`, `ci-result` turns their failure into a warning, and every other
+  job is gated to pull requests. A change that makes a push-time job gate anything, or that needs
+  the bot's commit to pass a hook, is a blocker.
 - **Generated files are not edited here.** A diff under `Casks/` or `Formula/` from a human pull
   request is a finding unless it is a revert of a broken release, and even then the producing
   repository must be fixed in step.
@@ -90,6 +91,20 @@ a generated file is there.
   attribute, and `brew uninstall --zap`.
 - **Contract drift:** compare the README table, AGENTS.md, SECURITY.md and the producing
   repositories' docs with the change.
+- **Commit type matches the change:** the tap has no releases, so no commit type derives a
+  version here, and a cask changes only through its producing project's release. The type still has
+  to describe the change: a `feat` or `fix` here claims a shipped change the tap cannot make, and a
+  fix that users need belongs in the producing repository, typed there by that repository's own
+  rules (monmux derives its version from them). A cask fix typed `chore` or `ci` in the producer
+  never reaches the tap: report it against the producer. Every commit lands as it is (merge
+  commits), so check each one, not just the pull request title.
+- **A meta-check that can no longer fail:** `scripts/check-license-headers.sh`, the `ci-result`
+  `jq` filter and the tap-equals-checkout assertion in `cask-audit` guard claims nothing else
+  checks. Break the guarded thing once (a tracked `.rb` outside `Casks/` without the header, a
+  `NEEDS` JSON with a failed `pre-commit-all` on a pull request, a tap left at another commit) and
+  see whether the check still fails. One that passes because its file list is empty, its `case`
+  pattern no longer matches anything, its exemption swallows a governed file, or its tolerance
+  covers more events than a push is a false pass: a finding.
 
 For each candidate finding, reproduce it or trace the failing push, cask or workflow run end to end.
 If that confirms it, report it. If not, dig once more; if it is still unconfirmed, drop it.
@@ -98,8 +113,9 @@ If that confirms it, report it. If not, dig once more; if it is still unconfirme
 
 | Diff touched | Run |
 | --- | --- |
-| workflows, Makefile, pre-commit config | `make check` |
-| a cask (revert only) | on a Mac: `brew tap leinardi/tap "$PWD"`, `brew style --except-cops Cask/StanzaOrder leinardi/tap`, `brew audit --tap leinardi/tap --strict --online` |
+| workflows, Makefile, pre-commit config | `make check`; for `ci-result`, replay its `jq` with a `NEEDS` JSON per event |
+| `scripts/check-license-headers.sh` | `make check`, and the mutation from the meta-check pass above |
+| a cask (revert only) | on a Mac, the `brew tap`, `brew style` and `brew audit` commands in `AGENTS.md` |
 | docs or skill only | `make check` |
 
 A failing gate is a confirmed finding when caused by the reviewed change. If a gate cannot run (no
