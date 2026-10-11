@@ -80,8 +80,7 @@ EXEMPT_PATHS=(
 )
 
 # The shared make fragments, read from the Makefile so the list cannot drift from what the
-# bootstrap actually fetches. An empty list exempts nothing, so a renamed variable fails loudly on
-# the fetched snippets rather than passing silently.
+# bootstrap actually fetches.
 mk_common_files() {
 	sed -n 's/^MK_COMMON_FILES[[:space:]]*:=[[:space:]]*//p' Makefile
 }
