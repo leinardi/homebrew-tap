@@ -14,8 +14,13 @@ Any HTML comment will be stripped when the markdown is rendered, so you don't ne
 - [ ] I am targeting the `main` branch
 - [ ] I have **rebased** this branch on top of the destination branch
 - [ ] I have executed `make check` locally *before creating the commit* and it has run successfully
-- [ ] I have not edited a generated cask or formula by hand: those change in the repository whose release pipeline writes them
-- [ ] Every commit message follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) with a scope (`type(scope): subject`)
+- [ ] I have not edited a generated cask or formula by hand: those change in the repository whose
+  release pipeline writes them
+- [ ] Every commit message follows
+  [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) with a scope
+  (`type(scope): subject`)
+- [ ] Each commit type describes the change (`ci`, `build`, `docs`, `chore`): the tap has no
+  releases, so no type derives a version here, and a cask fix ships from its producing project
 - [ ] I have performed a self-review of my own code
 - [ ] There are no `WIP` commits in this PR
 
