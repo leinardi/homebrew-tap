@@ -8,11 +8,11 @@ cask "monmux" do
     end
   end
 
-  version "0.8.0"
+  version "0.9.0"
 
   on_macos do
     on_arm do
-      sha256 "b76c609c6dd70c36d27a7fcd50a178d0369d35acf40ff8d24b4494942b224734"
+      sha256 "19cbf54669c6f0c088829704fe9c0c758c5535344c433b33dc6028b58bba54f4"
       url "https://github.com/leinardi/monmux/releases/download/v#{version}/monmux_#{version}_darwin_arm64.tar.gz"
     end
   end
