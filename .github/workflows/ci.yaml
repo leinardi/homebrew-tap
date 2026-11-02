@@ -229,12 +229,14 @@ jobs:
 
       # Path-based `brew audit` is disabled for casks, so the checkout is tapped under the tap's own
       # name. The published tap must not be what gets audited: the job fails unless the tapped
-      # repository is exactly this checkout.
+      # repository is exactly this checkout. Homebrew refuses to load a cask from a non-official
+      # tap until the tap is trusted (`brew trust`), so the checkout is trusted once tapped.
       - name: Tap this checkout as leinardi/tap
         run: |
           set -euo pipefail
           brew untap leinardi/tap 2>/dev/null || true
           brew tap leinardi/tap "$GITHUB_WORKSPACE"
+          brew trust --tap leinardi/tap
           TAPPED=$(git -C "$(brew --repository leinardi/tap)" rev-parse HEAD)
           CHECKED_OUT=$(git rev-parse HEAD)
           if [ "$TAPPED" != "$CHECKED_OUT" ]; then
