@@ -27,6 +27,7 @@ refresh: `make mk-common-update`. Project targets live in local `.mk/*.mk` files
 
 ```bash
 brew tap leinardi/tap "$PWD"
+brew trust --tap leinardi/tap
 brew style --cask \
   --except-cops Cask/StanzaOrder,Cask/StanzaGrouping,Layout/FirstArrayElementIndentation \
   leinardi/tap/monmux
