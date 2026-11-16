@@ -88,12 +88,13 @@ adversarial-review-loop, `verification.txt` when supplied, which is the implemen
 proof; when invoked directly, the CI status or gate output in the PR or session) and what is
 missing, such as a `ci-result` change with no `jq` replay per event, a meta-check change with no
 mutation showing it still fails, or a cask revert with no Mac audit result (rely on CI's
-`cask-audit`, never imply it passed). A failure in that evidence caused by the reviewed change is a
-confirmed finding. Never say that a check you did not see passed. Judge whether the change's tests
-prove it: a behaviour change needs a test that fails on the old code. When invoked directly, one
-focused command (`pre-commit run <hook-id> --files <file>`, for a hook that checks only the files it
-is given) may be run to confirm a single suspected finding, never a full suite or gate. A candidate
-that is neither reproduced nor traced end to end is dropped.
+`cask-audit`, never imply it passed). Judge what is missing against `AGENTS.md`'s *Validation
+matrix*: every changed path owes the checks its row names. A failure in that evidence caused by the
+reviewed change is a confirmed finding. Never say that a check you did not see passed. Judge whether
+the change's tests prove it: a behaviour change needs a test that fails on the old code. When
+invoked directly, one focused command (`pre-commit run <hook-id> --files <file>`, for a hook that
+checks only the files it is given) may be run to confirm a single suspected finding, never a full
+suite or gate. A candidate that is neither reproduced nor traced end to end is dropped.
 
 ## Report
 
